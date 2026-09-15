@@ -27,6 +27,7 @@ FLAGS_OPTS = {
     "short_ranks": "Short rank names instead of long ones",
     "truncate_skins": "Truncate long skin names if the window is too small",
     "truncate_names": "Truncate long player names if the window is too small",
+    "auto_open_loadouts": "Open Player Inventories in browser on startup",
 }
 
 weapon_question = lambda config: {
@@ -55,7 +56,7 @@ port_question = lambda config: {
         "message": "Please enter port for server to run:",
         "default": config.get("port", 1100),
         "min_allowed":0,
-        "max_allowed": 65535,
+        "max_allowed": 65534,
         "filter": lambda ans: int(ans)
     }
 
