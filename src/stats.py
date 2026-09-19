@@ -228,5 +228,5 @@ class Stats:
         if s < 3600:
             return f"{s // 60} minute" if s // 60 == 1 else f"{s // 60} minutes"
         if s < 86400:
-            return f"{s // 3600} hours" if s // 3600 == 1 else f"{s // 3600} hours"
-        return f"{s // 86400} days" if s // 86400 == 1 else f"{s // 86400} days"
+            return f"{s // 3600} hour" if s // 3600 == 1 else f"{s // 3600} hours"
+        return f"{s // 86400} day" if s // 86400 == 1 else f"{s // 86400} days"

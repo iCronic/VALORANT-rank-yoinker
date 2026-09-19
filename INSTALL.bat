@@ -3,7 +3,7 @@ setlocal EnableDelayedExpansion
 
 REM Define supported Python versions X.Y.Z for easy future updates
 set SUPPORTED_MIN_VERSION=3.10
-set SUPPORTED_MAX_VERSION=3.11.9
+set SUPPORTED_MAX_VERSION=3.14.5
 
 REM Extract for numeric comparison
 for /f "tokens=1-3 delims=." %%a in ("%SUPPORTED_MIN_VERSION%") do (
