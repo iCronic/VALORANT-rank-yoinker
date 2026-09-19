@@ -24,6 +24,19 @@ class Error:
             self.log("Port is being blocked by the firewall or in use by another application")
         sock.close()
 
+    def ServerError(self, server_type, port, error):
+        address_in_use = getattr(error, "winerror", None) == 10048 or getattr(
+            error, "errno", None
+        ) in (48, 98, 10048)
+        reason = "the port is already in use" if address_in_use else str(error)
+        print(
+            f"Unable to start the {server_type} server on port {port}: {reason}"
+        )
+        self.log(
+            f"Failed to start {server_type} server on port {port}: "
+            f"{type(error).__name__}: {error}"
+        )
+
     def LockfileError(self, path, ignoreLockfile=False):
         #ignoring lockfile is for when lockfile exists but it's not really valid, (local endpoints are not initialized yet)
         if os.path.exists(path) and ignoreLockfile == False:

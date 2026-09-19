@@ -133,7 +133,9 @@ try:
     coregame = Coregame(Requests, log)
 
     Server = Server(log, ErrorSRC)
-    Server.start_server()
+    if not Server.start_server():
+        input("Press enter to exit...\n")
+        os._exit(1)
     if cfg.get_feature_flag("auto_open_loadouts"):
         webbrowser.open(f"http://localhost:{Server.mobile_port}")
 
@@ -143,11 +145,9 @@ try:
     map_urls = content.get_map_urls(map_info)
     map_splashes = content.get_map_splashes(map_info)
 
-    current_map = coregame.get_current_map(map_urls, map_splashes)
-
     colors = Colors(log, hide_names, agent_dict, AGENTCOLORLIST, tierDict)
 
-    loadoutsClass = Loadouts(Requests, log, colors, Server, current_map)
+    loadoutsClass = Loadouts(Requests, log, colors, Server, "N/A")
     table = Table(cfg, log)
 
     stats = Stats()
@@ -164,7 +164,9 @@ try:
 
     log(f"VALORANT rank yoinker v{version}")
 
-    valoApiSkins = requests.get("https://valorant-api.com/v1/weapons/skins")
+    valoApiSkins = requests.get(
+        "https://valorant-api.com/v1/weapons/skins", timeout=HTTP_TIMEOUT
+    )
     gameContent = content.get_content()
     seasonID = content.get_latest_season_id(gameContent)
     previousSeasonID = content.get_previous_season_id(gameContent)
@@ -490,6 +492,13 @@ try:
                 coregame_match_id = coregame.get_coregame_match_id()
                 ensure_match_player_cache(coregame_match_id)
                 Players = coregame_stats["Players"]
+                current_map = coregame.get_current_map(
+                    map_urls, map_splashes, coregame_stats
+                )
+                loadoutsClass.current_map = current_map
+                presence = presences.wait_for_presence(
+                    namesClass.get_players_puuid(Players)
+                )
                 # data for chat to function
                 partyMembers = menu.get_party_members(Requests.puuid, presence)
                 partyMembersList = [a["Subject"] for a in partyMembers]
@@ -512,7 +521,6 @@ try:
                 Wss.set_player_data(players_data)
 
                 server = coregame_stats.get("GamePodID", "")
-                presences.wait_for_presence(namesClass.get_players_puuid(Players))
                 names = namesClass.get_names_from_puuids(Players)
                 loadouts_arr = loadoutsClass.get_match_loadouts(
                     coregame_match_id,
@@ -527,7 +535,7 @@ try:
                 isRange = False
                 playersLoaded = 1
 
-                heartbeat_data["map"] = (map_urls[coregame_stats["MapID"].lower()],)
+                heartbeat_data["map"] = current_map["name"]
                 with richConsole.status("Loading Players...") as status:
                     partyOBJ = menu.get_party_json(
                         namesClass.get_players_puuid(Players), presence
@@ -805,7 +813,13 @@ try:
                     continue
                 server = pregame_stats.get("GamePodID", "")
                 Players = pregame_stats["AllyTeam"]["Players"]
-                presences.wait_for_presence(namesClass.get_players_puuid(Players))
+                current_map = coregame.get_current_map(
+                    map_urls, map_splashes, pregame_stats
+                )
+                loadoutsClass.current_map = current_map
+                presence = presences.wait_for_presence(
+                    namesClass.get_players_puuid(Players)
+                )
                 names = namesClass.get_names_from_puuids(Players)
                 pregame_match_id = pregame_stats.get("ID")
                 ensure_match_player_cache(pregame_match_id)
@@ -821,7 +835,6 @@ try:
                 loadouts_data = loadouts_arr[1]
                 playersLoaded = 1
                 with richConsole.status("Loading Players...") as status:
-                    presence = presences.get_presence()
                     partyOBJ = menu.get_party_json(
                         namesClass.get_players_puuid(Players), presence
                     )

@@ -60,15 +60,18 @@ class Server:
         self.lastMessages = {}
 
     def start_server(self):
+        with open(os.path.join(PROJECT_ROOT, "config.json"), "r") as conf:
+            port = json.load(conf)["port"]
+
         try:
-            # print(self.lastMessage)
-            with open(os.path.join(PROJECT_ROOT, "config.json"), "r") as conf:
-                port = json.load(conf)["port"]
             self.server = QuietWebsocketServer(host="0.0.0.0", port=port)
-            # server = websocket.WebSocketApp("wss://localhost:1100", on_open=on_open, on_message=on_message, on_close=on_close)
             self.server.set_fn_new_client(self.handle_new_client)
             self.server.run_forever(threaded=True)
+        except Exception as error:
+            self.Error.ServerError("WebSocket", port, error)
+            return False
 
+        try:
             docs_directory = PROJECT_ROOT / "docs"
             if not docs_directory.is_dir():
                 docs_directory = PROJECT_ROOT.parent / "docs"
@@ -84,8 +87,11 @@ class Server:
                 target=self.mobile_server.serve_forever,
                 daemon=True,
             ).start()
-        except Exception as e:
-            self.Error.PortError(port)
+        except Exception as error:
+            self.Error.ServerError("HTTP", port + 1, error)
+            return False
+
+        return True
 
     def handle_new_client(self, client, server):
         self.send_payload("version",{

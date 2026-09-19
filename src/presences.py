@@ -58,11 +58,21 @@ class Presences:
             "partyVersion": 0,
         }
 
-    def wait_for_presence(self, PlayersPuuids):
+    def wait_for_presence(self, player_puuids, timeout=10):
+        expected_puuids = set(player_puuids)
+        deadline = time.monotonic() + timeout
+
         while True:
-            presence = self.get_presence()
-            for puuid in PlayersPuuids:
-                if puuid not in str(presence):
-                    time.sleep(1)
-                    continue
-            break
+            presences = self.get_presence() or []
+            available_puuids = {presence.get("puuid") for presence in presences}
+            missing_puuids = expected_puuids - available_puuids
+
+            if not missing_puuids:
+                return presences
+            if time.monotonic() >= deadline:
+                self.log(
+                    f"Timed out waiting for {len(missing_puuids)} presence(s)."
+                )
+                return presences
+
+            time.sleep(1)

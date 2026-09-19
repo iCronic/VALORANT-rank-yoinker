@@ -55,7 +55,7 @@ port_question = lambda config: {
         "name": "port",
         "message": "Please enter port for server to run:",
         "default": config.get("port", 1100),
-        "min_allowed":0,
+        "min_allowed":1,
         "max_allowed": 65534,
         "filter": lambda ans: int(ans)
     }
