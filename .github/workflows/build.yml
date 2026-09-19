@@ -39,11 +39,6 @@ jobs:
       - name: Build Native Executable
         run: python setup.py build
 
-      - name: Copy docs into build output
-        shell: pwsh
-        run: |
-          Copy-Item -Path "docs" -Destination "build/exe.win-amd64-${{ env.PYTHON_BUILD_VERSION }}/docs" -Recurse -Force
-
       - name: Get short commit hash
         id: commit
         shell: pwsh

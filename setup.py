@@ -17,7 +17,7 @@ from src.constants import version
 
 build_exe_options = {
     "path": sys.path,
-    "include_files":['configurator.bat', 'updatescript.bat'],
+    "include_files": ['configurator.bat', 'updatescript.bat', ('docs', 'docs')],
     "packages": ["requests", "InquirerPy", "websockets", "pypresence", "nest_asyncio", "rich", "websocket_server"],
     "excludes": ["tkinter", "test", "unittest", "pygments", "xmlrpc"]
 }
