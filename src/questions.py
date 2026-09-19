@@ -1,5 +1,5 @@
 from InquirerPy.base.control import Choice
-from src.constants import DEFAULT_CONFIG, WEAPONS
+from src.constants import AGENTCOLORLIST, DEFAULT_CONFIG, WEAPONS
 
 TABLE_OPTS = {
     "skin": "Skin",
@@ -30,13 +30,27 @@ FLAGS_OPTS = {
     "auto_open_loadouts": "Open Player Inventories in browser on startup",
 }
 
+AGENT_OPTS = {
+    agent: agent.title()
+    for agent in AGENTCOLORLIST
+    if agent not in ("none", None)
+}
+
 weapon_question = lambda config: {
         "type": "fuzzy",
         "name": "weapon",
         "message": "Please select a weapon to show skin for:",
         "default": config.get("weapon","Vandal"),
         "choices": WEAPONS,
-    }
+}
+
+agent_question = lambda config: {
+    "type": "list",
+    "name": "instalock_agent",
+    "message": "Please select an agent to instalock:",
+    "default": config.get("instalock_agent", "jett"),
+    "choices": [Choice(k, name=v) for k, v in AGENT_OPTS.items()],
+}
 
 table_question = lambda config: {
         "type": "checkbox",
@@ -68,7 +82,9 @@ flags_question = lambda config: {
             Choice(k, name=v, enabled=config.get("flags",DEFAULT_CONFIG["flags"]).get(k, DEFAULT_CONFIG["flags"][k]))
             for k, v in FLAGS_OPTS.items()
         ],
-        "filter": lambda flags: {k: k in flags for k in FLAGS_OPTS.keys()},
+        "filter": lambda flags: (
+            DEFAULT_CONFIG["flags"] | config.get("flags", {})
+        ) | {k: k in flags for k in FLAGS_OPTS.keys()},
         "long_instruction": "Press 'space' to toggle selection and 'enter' to submit"
     }
 

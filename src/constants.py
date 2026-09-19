@@ -197,6 +197,7 @@ DEFAULT_CONFIG = {
     "cooldown": 10,
     "port": 1100,
     "weapon": "Vandal",
+    "instalock_agent": "jett",
     "chat_limit": 5,
     "table": {
         "skin": True,
@@ -223,6 +224,7 @@ DEFAULT_CONFIG = {
         "short_ranks": False,
         "truncate_skins": True,
         "truncate_names": True,
-        "auto_open_loadouts": False
+        "auto_open_loadouts": False,
+        "instalock": False
     }
 }

@@ -26,6 +26,7 @@ def configure():
         "Weapon Selection",
         "Table Customization",
         "Optional Feature Flags",
+        "Instalock Settings",
         Separator(),
         "Full Basic Config (Suitable for most users)",
         "Full Advance Config (I know what i am doing!)",
@@ -44,17 +45,29 @@ def configure():
             default=menu_choices[0],
         ).execute()
 
-        if choice is menu_choices[0]:
+        if choice == menu_choices[0]:
             changed_config |= prompt([weapon_question(config=loop_config)])
-        elif choice is menu_choices[1]:
+        elif choice == menu_choices[1]:
             changed_config |= prompt([table_question(config=loop_config)])
-        elif choice is menu_choices[2]:
+        elif choice == menu_choices[2]:
             changed_config |= prompt([flags_question(config=loop_config)])
-        elif choice is menu_choices[4]:
+        elif choice == menu_choices[3]:
+            instalock_enabled = inquirer.confirm(
+                message="Enable instalock?",
+                default=loop_config.get("flags", DEFAULT_CONFIG["flags"]).get(
+                    "instalock", False
+                ),
+            ).execute()
+            flags = loop_config.get("flags", DEFAULT_CONFIG["flags"]).copy()
+            flags["instalock"] = instalock_enabled
+            changed_config["flags"] = flags
+            if instalock_enabled:
+                changed_config |= prompt([agent_question(config=loop_config)])
+        elif choice == menu_choices[5]:
             changed_config |= prompt(basic_questions(config=loop_config))
-        elif choice is menu_choices[5]:
+        elif choice == menu_choices[6]:
             changed_config |= prompt(advance_questions(config=loop_config))
-        elif choice is menu_choices[7]:
+        elif choice == menu_choices[8]:
             proceed=True
             break
         else:

@@ -28,6 +28,12 @@ class Loadouts:
             PlayerInventorys = self.Requests.fetch(
                 "glz", f"/pregame/v1/matches/{match_id}/loadouts", "get")
 
+        if not isinstance(PlayerInventorys, dict) or not isinstance(
+            PlayerInventorys.get("Loadouts"), list
+        ):
+            self.log(f"loadouts unavailable for match '{match_id}': {PlayerInventorys}")
+            return None
+
         # subject (player UUID) -> loadout lookup
         loadout_by_subject = {}
         for loadout_entry in PlayerInventorys["Loadouts"]:

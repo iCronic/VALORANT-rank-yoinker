@@ -109,10 +109,9 @@ class Requests:
             print(color("[WARNING] Failed processing status - skipping...", fore=(255, 165, 0)))
             return
             
-    def fetch(self, url_type: str, endpoint: str, method: str, rate_limit_seconds=5):
+    def fetch(self, url_type: str, endpoint: str, method: str, rate_limit_seconds=5, max_retries=3):
         try:
             if url_type == "glz":
-                max_retries = 3
                 response = None
                 for attempt in range(max_retries):
                     try:

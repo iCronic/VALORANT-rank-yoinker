@@ -140,6 +140,23 @@ try:
         webbrowser.open(f"http://localhost:{Server.mobile_port}")
 
     agent_dict = content.get_all_agents()
+    instalock_agent_id = next(
+        (
+            agent_id
+            for agent_id, agent_name in agent_dict.items()
+            if agent_name
+            and agent_name.casefold() == str(cfg.instalock_agent).casefold()
+        ),
+        None,
+    )
+    instalock_match_id = None
+    if cfg.get_feature_flag("instalock") and instalock_agent_id is None:
+        print(
+            color(
+                f"[WARNING] Unknown instalock agent: {cfg.instalock_agent}",
+                fore=(255, 165, 0),
+            )
+        )
 
     map_info = content.get_all_maps()
     map_urls = content.get_map_urls(map_info)
@@ -530,6 +547,8 @@ try:
                     names,
                     state="game",
                 )
+                if loadouts_arr is None:
+                    continue
                 loadouts = loadouts_arr[0]
                 loadouts_data = loadouts_arr[1]
                 isRange = False
@@ -811,6 +830,27 @@ try:
                 pregame_stats = pregame.get_pregame_stats()
                 if pregame_stats == None:
                     continue
+                pregame_match_id = pregame_stats.get("ID")
+                if (
+                    cfg.get_feature_flag("instalock")
+                    and instalock_agent_id is not None
+                    and pregame_match_id != instalock_match_id
+                ):
+                    instalock_match_id = pregame_match_id
+                    if pregame.instalock(pregame_match_id, instalock_agent_id):
+                        print(
+                            color(
+                                f"Instalocked {cfg.instalock_agent.title()}.",
+                                fore=(103, 237, 76),
+                            )
+                        )
+                    else:
+                        print(
+                            color(
+                                f"Could not instalock {cfg.instalock_agent.title()}.",
+                                fore=(255, 165, 0),
+                            )
+                        )
                 server = pregame_stats.get("GamePodID", "")
                 Players = pregame_stats["AllyTeam"]["Players"]
                 current_map = coregame.get_current_map(
@@ -821,16 +861,17 @@ try:
                     namesClass.get_players_puuid(Players)
                 )
                 names = namesClass.get_names_from_puuids(Players)
-                pregame_match_id = pregame_stats.get("ID")
                 ensure_match_player_cache(pregame_match_id)
                 loadouts_arr = loadoutsClass.get_match_loadouts(
-                    pregame.get_pregame_match_id(),
+                    pregame_match_id,
                     pregame_stats,
                     cfg.weapon,
                     valoApiSkins,
                     names,
                     state="pregame",
                 )
+                if loadouts_arr is None:
+                    continue
                 loadouts = loadouts_arr[0]
                 loadouts_data = loadouts_arr[1]
                 playersLoaded = 1
