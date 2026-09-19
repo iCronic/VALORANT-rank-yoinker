@@ -9,9 +9,10 @@ import shutil
 import sys
 import zipfile
 import io
+import re
 import subprocess
 from requests.exceptions import ConnectionError
-from src.constants import PROJECT_ROOT
+from src.constants import HTTP_TIMEOUT, PROJECT_ROOT
 
 class Requests:
     def __init__(self, version, log, Error):
@@ -39,7 +40,10 @@ class Requests:
     def check_version(version, copy_run_update_script):
         # checking for latest release
         try:
-            r = requests.get("https://api.github.com/repos/mdevio/VALORANT-rank-yoinker/releases")
+            r = requests.get(
+                "https://api.github.com/repos/mdevio/VALORANT-rank-yoinker/releases",
+                timeout=HTTP_TIMEOUT,
+            )
         except requests.exceptions.RequestException:
             print(color("[WARNING] Unable to check for updates - skipping...", fore=(255, 165, 0)))
             return
@@ -51,7 +55,11 @@ class Requests:
                 if "zip" in asset["content_type"]:
                         link = asset["browser_download_url"] # link for the latest release
                         break
-            if float(release_version) > float(version):
+            def version_parts(value):
+                parts = [int(part) for part in re.findall(r"\d+", value)]
+                return tuple((parts + [0, 0, 0])[:3])
+
+            if version_parts(release_version) > version_parts(version):
                 print(color("[UPDATE] New version available!", fore=(0, 255, 0)))
                 if sys.argv[0][-3:] == "exe":
                     while True:
@@ -74,7 +82,7 @@ class Requests:
         except FileExistsError:
             pass
         shutil.copyfile(os.path.join(PROJECT_ROOT, "updatescript.bat"), os.path.join(os.getenv('APPDATA'), "vry", "updatescript.bat"))
-        r_zip = requests.get(link, stream=True)
+        r_zip = requests.get(link, stream=True, timeout=HTTP_TIMEOUT)
         z = zipfile.ZipFile(io.BytesIO(r_zip.content))
         z.extractall(os.path.join(os.getenv('APPDATA'), "vry"))
         subprocess.Popen([os.path.join(os.getenv('APPDATA'), "vry", "updatescript.bat"), os.path.join(os.getenv('APPDATA'), "vry", ".".join(os.path.basename(link).split(".")[:-1])), PROJECT_ROOT, os.path.join(os.getenv('APPDATA'), "vry")])
@@ -84,7 +92,9 @@ class Requests:
         # checking status
         try:
             rStatus = requests.get(
-                "https://raw.githubusercontent.com/mdevio/VALORANT-rank-yoinker/main/status.json")
+                "https://raw.githubusercontent.com/mdevio/VALORANT-rank-yoinker/main/status.json",
+                timeout=HTTP_TIMEOUT,
+            )
         except requests.exceptions.RequestException:
             print(color("[WARNING] Unable to check status - skipping...", fore=(255, 165, 0)))
             print(color("[TIP] If vRY does not continue, make sure your VALORANT status is not set to Away.", fore=(255, 165, 0)))
@@ -102,31 +112,57 @@ class Requests:
     def fetch(self, url_type: str, endpoint: str, method: str, rate_limit_seconds=5):
         try:
             if url_type == "glz":
-                response = requests.request(method, self.glz_url + endpoint, headers=self.get_headers(), verify=False)
-                self.log(f"fetch: url: '{url_type}', endpoint: {endpoint}, method: {method},"
-                    f" response code: {response.status_code}")
+                max_retries = 3
+                response = None
+                for attempt in range(max_retries):
+                    try:
+                        response = requests.request(
+                            method,
+                            self.glz_url + endpoint,
+                            headers=self.get_headers(),
+                            verify=False,
+                            timeout=HTTP_TIMEOUT,
+                        )
+                    except requests.exceptions.RequestException as error:
+                        self.log(
+                            f"GLZ request failed ({attempt + 1}/{max_retries}): "
+                            f"{error}"
+                        )
+                        if attempt < max_retries - 1:
+                            time.sleep(rate_limit_seconds)
+                            self.headers = {}
+                        continue
 
-                if response.status_code == 404:
-                    return response.json()
+                    self.log(f"fetch: url: '{url_type}', endpoint: {endpoint}, method: {method},"
+                        f" response code: {response.status_code}")
 
-                try:
-                    if response.json().get("errorCode") == "BAD_CLAIMS":
-                        self.log("detected bad claims")
-                        self.headers = {}
-                        return self.fetch(url_type, endpoint, method)
-                except JSONDecodeError:
-                    pass
-                if not response.ok:
+                    if response.status_code == 404:
+                        return response.json()
+
+                    try:
+                        if response.json().get("errorCode") == "BAD_CLAIMS":
+                            self.log("detected bad claims")
+                            self.headers = {}
+                            continue
+                    except JSONDecodeError:
+                        pass
+
+                    if response.ok:
+                        return response.json()
+
                     if response.status_code == 429:
                         self.log("response not ok glz endpoint: rate limit 429")
                     else:
                         self.log("response not ok glz endpoint: " + response.text)
-                    time.sleep(rate_limit_seconds+5)
-                    self.headers = {}
-                    self.fetch(url_type, endpoint, method)
-                return response.json()
+
+                    if attempt < max_retries - 1:
+                        time.sleep(rate_limit_seconds)
+                        self.headers = {}
+
+                self.log(f"GLZ request failed after {max_retries} attempts.")
+                return response.json() if response is not None else None
             elif url_type == "pd":
-                response = requests.request(method, self.pd_url + endpoint, headers=self.get_headers(), verify=False)
+                response = requests.request(method, self.pd_url + endpoint, headers=self.get_headers(), verify=False, timeout=HTTP_TIMEOUT)
                 self.log(
                     f"fetch: url: '{url_type}', endpoint: {endpoint}, method: {method},"
                     f" response code: {response.status_code}")
@@ -176,7 +212,7 @@ class Requests:
                 self.log(f"Failed to connect to local client after {max_retries} attempts.")
                 return None
             elif url_type == "custom":
-                response = requests.request(method, f"{endpoint}", headers=self.get_headers(), verify=False)
+                response = requests.request(method, f"{endpoint}", headers=self.get_headers(), verify=False, timeout=HTTP_TIMEOUT)
                 self.log(
                     f"fetch: url: '{url_type}', endpoint: {endpoint}, method: {method},"
                     f" response code: {response.status_code}")
@@ -235,7 +271,7 @@ class Requests:
                     ('riot:' + self.lockfile['password']).encode()).decode()}
                 try:
                     response = requests.get(f"https://127.0.0.1:{self.lockfile['port']}/entitlements/v1/token",
-                                            headers=local_headers, verify=False)
+                                            headers=local_headers, verify=False, timeout=5)
                     self.log(f"https://127.0.0.1:{self.lockfile['port']}/entitlements/v1/token\n{local_headers}")
                 except ConnectionError:
                     self.log(f"https://127.0.0.1:{self.lockfile['port']}/entitlements/v1/token\n{local_headers}")
