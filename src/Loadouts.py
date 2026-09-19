@@ -1,7 +1,7 @@
 import time
 import requests
 from src.colors import color
-from src.constants import sockets, hide_names
+from src.constants import HTTP_TIMEOUT, sockets, hide_names
 
 
 class Loadouts:
@@ -16,7 +16,7 @@ class Loadouts:
     def get_match_loadouts(self, match_id, players, weaponChoose, valoApiSkins, names, state="game"):
         weaponLists = {}
         valApiWeapons = requests.get(
-            "https://valorant-api.com/v1/weapons").json()
+            "https://valorant-api.com/v1/weapons", timeout=HTTP_TIMEOUT).json()
         if state == "game":
             team_id = "Blue"
             PlayerInventorys = self.Requests.fetch(
@@ -74,15 +74,15 @@ class Loadouts:
     def convertLoadoutToJsonArray(self, PlayerInventorys, players, state, names, team_id=None):
         # get agent dict from main in future
         # names = self.namesClass.get_names_from_puuids(players)
-        valoApiSprays = requests.get("https://valorant-api.com/v1/sprays")
-        valoApiFlex = requests.get("https://valorant-api.com/v1/flex")
-        valoApiWeapons = requests.get("https://valorant-api.com/v1/weapons")
-        valoApiBuddies = requests.get("https://valorant-api.com/v1/buddies")
-        valoApiAgents = requests.get("https://valorant-api.com/v1/agents")
+        valoApiSprays = requests.get("https://valorant-api.com/v1/sprays", timeout=HTTP_TIMEOUT)
+        valoApiFlex = requests.get("https://valorant-api.com/v1/flex", timeout=HTTP_TIMEOUT)
+        valoApiWeapons = requests.get("https://valorant-api.com/v1/weapons", timeout=HTTP_TIMEOUT)
+        valoApiBuddies = requests.get("https://valorant-api.com/v1/buddies", timeout=HTTP_TIMEOUT)
+        valoApiAgents = requests.get("https://valorant-api.com/v1/agents", timeout=HTTP_TIMEOUT)
         valoApiTitles = requests.get(
-            "https://valorant-api.com/v1/playertitles")
+            "https://valorant-api.com/v1/playertitles", timeout=HTTP_TIMEOUT)
         valoApiPlayerCards = requests.get(
-            "https://valorant-api.com/v1/playercards")
+            "https://valorant-api.com/v1/playercards", timeout=HTTP_TIMEOUT)
 
         final_final_json = {"Players": {},
                             "time": int(time.time()),

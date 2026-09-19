@@ -1,4 +1,5 @@
 import requests
+from src.constants import HTTP_TIMEOUT
 
 class Content():
     def __init__(self, Requests, log):
@@ -29,7 +30,10 @@ class Content():
         return None
 
     def get_all_agents(self):
-        rAgents = requests.get("https://valorant-api.com/v1/agents?isPlayableCharacter=true").json()
+        rAgents = requests.get(
+            "https://valorant-api.com/v1/agents?isPlayableCharacter=true",
+            timeout=HTTP_TIMEOUT,
+        ).json()
         agent_dict = {}
         agent_dict.update({None: None})
         agent_dict.update({"": ""})
@@ -43,7 +47,9 @@ class Content():
         Requests data and assets of all maps.
         :return: JSON of all map information.
         """
-        return requests.get("https://valorant-api.com/v1/maps").json()
+        return requests.get(
+            "https://valorant-api.com/v1/maps", timeout=HTTP_TIMEOUT
+        ).json()
 
     def get_map_urls(self, maps) -> dict:
         map_dict = {}

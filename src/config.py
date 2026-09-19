@@ -4,7 +4,7 @@ from json import JSONDecodeError
 import requests
 import os
 
-from src.constants import DEFAULT_CONFIG, PROJECT_ROOT
+from src.constants import DEFAULT_CONFIG, HTTP_TIMEOUT, PROJECT_ROOT
 
 def apply_defaults(cls):
     for name, value in DEFAULT_CONFIG.items():
@@ -72,7 +72,9 @@ class Config:
         return jsonToWrite
 
     def weapon_check(self, name):
-        if name in [weapon["displayName"] for weapon in requests.get("https://valorant-api.com/v1/weapons").json()["data"]]:
+        if name in [weapon["displayName"] for weapon in requests.get(
+            "https://valorant-api.com/v1/weapons", timeout=HTTP_TIMEOUT
+        ).json()["data"]]:
             return True
         else:
             return False
